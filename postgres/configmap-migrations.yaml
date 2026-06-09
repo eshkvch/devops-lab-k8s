@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-migrations
+data:
+  001_init.sql: |
+    CREATE TABLE IF NOT EXISTS configs (
+      env TEXT NOT NULL,
+      key TEXT NOT NULL,
+      value TEXT NOT NULL,
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (env, key)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_configs_env ON configs(env);
+
+    COMMENT ON TABLE configs IS 'Таблица для хранения конфигураций различных окружений';
+    COMMENT ON COLUMN configs.env IS 'Имя окружения (production, development, staging и т.д.)';
+    COMMENT ON COLUMN configs.key IS 'Ключ конфигурации';
+    COMMENT ON COLUMN configs.value IS 'Значение конфигурации';
+    COMMENT ON COLUMN configs.updated_at IS 'Время последнего обновления';
