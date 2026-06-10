@@ -4,7 +4,7 @@ kind: Kustomization
 namespace: config-service
 
 resources:
-  - secret.yaml
+#  - secret.yaml
   - configmap-migrations.yaml
   - statefulset.yaml
   - service.yaml
