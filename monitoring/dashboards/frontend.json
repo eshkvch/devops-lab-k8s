@@ -1,0 +1,110 @@
+{
+  "uid": "config-service-frontend",
+  "title": "Frontend (Nginx)",
+  "tags": ["config-service", "frontend", "nginx"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 2,
+  "refresh": "10s",
+  "time": { "from": "now-30m", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "namespace",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(up{app=\"frontend\"}, namespace)",
+        "refresh": 1,
+        "current": { "text": "config-service", "value": "config-service" }
+      },
+      {
+        "name": "pod",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(up{app=\"frontend\", namespace=\"$namespace\"}, pod)",
+        "refresh": 1,
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Nginx HTTP requests per second (by frontend pod)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "reqps", "noValue": "0" } },
+      "targets": [
+        {
+          "expr": "sum by (pod) (rate(nginx_http_requests_total{app=\"frontend\", namespace=\"$namespace\", pod=~\"$pod\"}[1m]))",
+          "legendFormat": "{{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Nginx connections (by frontend pod)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "nginx_connections_active{app=\"frontend\", namespace=\"$namespace\", pod=~\"$pod\"}",
+          "legendFormat": "active {{pod}}"
+        },
+        {
+          "expr": "nginx_connections_reading{app=\"frontend\", namespace=\"$namespace\", pod=~\"$pod\"}",
+          "legendFormat": "reading {{pod}}"
+        },
+        {
+          "expr": "nginx_connections_writing{app=\"frontend\", namespace=\"$namespace\", pod=~\"$pod\"}",
+          "legendFormat": "writing {{pod}}"
+        },
+        {
+          "expr": "nginx_connections_waiting{app=\"frontend\", namespace=\"$namespace\", pod=~\"$pod\"}",
+          "legendFormat": "waiting {{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Accepted / handled connections rate",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "sum by (pod) (rate(nginx_connections_accepted{app=\"frontend\", namespace=\"$namespace\", pod=~\"$pod\"}[1m]))",
+          "legendFormat": "accepted {{pod}}"
+        },
+        {
+          "expr": "sum by (pod) (rate(nginx_connections_handled{app=\"frontend\", namespace=\"$namespace\", pod=~\"$pod\"}[1m]))",
+          "legendFormat": "handled {{pod}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Nginx exporter UP",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "min(nginx_up{app=\"frontend\", namespace=\"$namespace\", pod=~\"$pod\"})"
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ]
+        }
+      }
+    }
+  ]
+}
